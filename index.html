@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a1a">
+<title>계절근로자 관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  /* ============ 디자인 토큰 ============ */
+  :root {
+    --bg: #f5f3ee;
+    --bg-card: #ffffff;
+    --bg-elev: #ebe8e0;
+    --ink: #1a1a1a;
+    --ink-2: #4a4a48;
+    --ink-3: #8a8880;
+    --line: #e0ddd3;
+    --line-2: #d0ccc0;
+    --accent: #1a1a1a;
+    --accent-ink: #ffffff;
+    --green: #2d5a3d;
+    --green-bg: #e8f0ea;
+    --red: #8b2a2a;
+    --red-bg: #f5e6e6;
+    --amber: #8a5a1a;
+    --amber-bg: #f5ead0;
+    --blue: #1a4a6b;
+    --blue-bg: #e0ebf2;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+    --display: 'Gowun Dodum', 'Noto Sans KR', sans-serif;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+    overscroll-behavior-y: none;
+  }
+  body {
+    padding-bottom: 80px;
+    min-height: 100vh;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  input, select, textarea { font-family: inherit; font-size: 15px; }
+
+  /* ============ 헤더 ============ */
+  .app-header {
+    background: var(--ink);
+    color: var(--accent-ink);
+    padding: 18px 20px 16px;
+    position: sticky; top: 0; z-index: 50;
+    border-bottom: 2px solid var(--ink);
+  }
+  .app-title {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .app-title small {
+    font-family: var(--sans);
+    font-size: 11px; font-weight: 400;
+    opacity: 0.6; letter-spacing: 0.05em;
+  }
+
+  /* ============ 탭 바 (하단 고정) ============ */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--line);
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .tab-btn {
+    padding: 12px 4px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--ink-3);
+    transition: color 0.15s;
+    border-top: 2px solid transparent;
+  }
+  .tab-btn.active {
+    color: var(--ink);
+    border-top-color: var(--ink);
+    font-weight: 500;
+  }
+  .tab-icon {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tab-icon svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+
+  /* ============ 페이지 ============ */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; animation: fadeIn 0.2s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .section-title {
+    font-family: var(--display);
+    font-size: 17px; font-weight: 700;
+    margin: 0 0 12px; color: var(--ink);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title .count {
+    font-family: var(--sans); font-size: 12px; font-weight: 400;
+    color: var(--ink-3);
+    background: var(--bg-elev); padding: 3px 9px; border-radius: 10px;
+  }
+
+  /* ============ 카드 ============ */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .card.compact { padding: 12px 14px; }
+
+  /* ============ 폼 ============ */
+  .field { margin-bottom: 12px; }
+  .field-label {
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--ink-2); margin-bottom: 5px;
+    letter-spacing: 0.02em;
+  }
+  .field-label .req { color: var(--red); margin-left: 2px; }
+
+  .input, .select, .textarea {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    color: var(--ink);
+    transition: border-color 0.15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .input:focus, .select:focus, .textarea:focus {
+    outline: none; border-color: var(--ink);
+  }
+  .select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .textarea { min-height: 60px; resize: vertical; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* ============ 버튼 ============ */
+  .btn {
+    padding: 11px 18px;
+    border-radius: var(--radius);
+    font-weight: 500; font-size: 14px;
+    text-align: center;
+    transition: transform 0.05s, background 0.15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--ink); color: var(--accent-ink);
+    width: 100%; padding: 14px;
+    font-size: 15px; font-weight: 700;
+  }
+  .btn-primary:disabled { opacity: 0.5; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--line-2);
+    color: var(--ink);
+  }
+  .btn-ghost:hover { background: var(--bg-elev); }
+  .btn-sm { padding: 7px 12px; font-size: 13px; }
+  .btn-icon {
+    width: 34px; height: 34px;
+    padding: 0; border-radius: var(--radius);
+    background: var(--bg-elev);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .btn-icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+  .fab {
+    position: fixed; bottom: 80px; right: 16px;
+    width: 54px; height: 54px; border-radius: 50%;
+    background: var(--ink); color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 40;
+  }
+  .fab svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* ============ 배지/태그 ============ */
+  .badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 500;
+    padding: 2px 8px; border-radius: 10px;
+    letter-spacing: 0.02em;
+  }
+  .badge.green { background: var(--green-bg); color: var(--green); }
+  .badge.red { background: var(--red-bg); color: var(--red); }
+  .badge.amber { background: var(--amber-bg); color: var(--amber); }
+  .badge.blue { background: var(--blue-bg); color: var(--blue); }
+
+  /* ============ 배정 - 현장 블록 ============ */
+  .site-block {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .site-block-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .site-block-title {
+    font-family: var(--display);
+    font-size: 14px; font-weight: 700;
+  }
+
+  .worker-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-elev);
+    border-radius: var(--radius);
+    margin-bottom: 6px;
+  }
+  .worker-chip-name {
+    flex: 1; font-weight: 500; font-size: 14px;
+  }
+  .worker-chip-pay {
+    width: 90px;
+    padding: 6px 8px;
+    border: 1px solid var(--line-2);
+    border-radius: 6px;
+    background: var(--bg-card);
+    font-size: 13px;
+    text-align: right;
+  }
+  .worker-chip-remove {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--bg-card); color: var(--ink-3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 500;
+  }
+
+  .add-worker-btn {
+    width: 100%; padding: 10px;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--radius);
+    color: var(--ink-3); font-size: 13px;
+    background: transparent;
+    transition: all 0.15s;
+  }
+  .add-worker-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* ============ 근로자 자동완성 드롭다운 ============ */
+  .worker-search-wrap {
+    position: relative;
+    margin-top: 6px;
+  }
+  .worker-search-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    padding-left: 38px !important;
+  }
+  .worker-dropdown {
+    position: absolute;
+    top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius);
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 30;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .worker-dropdown.show { display: block; }
+  .dropdown-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.1s;
+  }
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:hover, .dropdown-item:active {
+    background: var(--bg-elev);
+  }
+  .dropdown-item-name {
+    font-weight: 500; font-size: 14px;
+    margin-bottom: 2px;
+  }
+  .dropdown-item-meta {
+    font-size: 11px; color: var(--ink-3);
+  }
+  .dropdown-item-meta .hi {
+    background: #fff59d; color: var(--ink);
+    padding: 0 2px; border-radius: 2px;
+  }
+  .dropdown-item-name .hi {
+    background: #fff59d; color: var(--ink);
+    padding: 0 2px; border-radius: 2px;
+  }
+  .dropdown-empty {
+    padding: 16px; text-align: center;
+    color: var(--ink-3); font-size: 13px;
+  }
+
+  /* ============ 리스트 아이템 (근로자/업주) ============ */
+  .list-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    margin-bottom: 8px;
+  }
+  .list-item-main { flex: 1; min-width: 0; }
+  .list-item-title {
+    font-weight: 500; font-size: 15px;
+    margin-bottom: 3px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .list-item-sub {
+    font-size: 12px; color: var(--ink-3);
+  }
+  .list-item-actions { display: flex; gap: 4px; }
+
+  /* ============ 대시보드 ============ */
+  .dash-hero {
+    background: var(--ink); color: var(--accent-ink);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .dash-hero-label { font-size: 12px; opacity: 0.7; margin-bottom: 6px; }
+  .dash-hero-value {
+    font-family: var(--display);
+    font-size: 32px; font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+  .dash-hero-month {
+    font-size: 12px; opacity: 0.6;
+    margin-top: 10px;
+  }
+
+  .metric-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .metric {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .metric-label { font-size: 11px; color: var(--ink-3); margin-bottom: 4px; }
+  .metric-value {
+    font-family: var(--display);
+    font-size: 19px; font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .metric-value.small { font-size: 16px; }
+
+  /* ============ 모달 ============ */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+  }
+  .modal-backdrop.open { display: flex; animation: fadeIn 0.15s; }
+  .modal {
+    background: var(--bg);
+    width: 100%;
+    border-radius: 18px 18px 0 0;
+    padding: 20px 16px 30px;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.2s;
+  }
+  @keyframes slideUp { from { transform: translateY(30px); } to { transform: none; } }
+  .modal-title {
+    font-family: var(--display);
+    font-size: 18px; font-weight: 700;
+    margin: 0 0 16px;
+  }
+  .modal-close-bar {
+    width: 36px; height: 4px; background: var(--line-2);
+    border-radius: 2px; margin: 0 auto 14px;
+  }
+
+  /* ============ 근로자 피커 (다중선택) ============ */
+  .picker-item {
+    padding: 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg-card);
+  }
+  .picker-item.selected {
+    border-color: var(--ink);
+    background: var(--bg-elev);
+  }
+  .picker-check {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid var(--line-2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .picker-item.selected .picker-check {
+    background: var(--ink); border-color: var(--ink); color: white;
+  }
+  .picker-name { flex: 1; font-weight: 500; }
+  .picker-meta { font-size: 11px; color: var(--ink-3); }
+
+  /* ============ 공백 상태 ============ */
+  .empty {
+    text-align: center; padding: 40px 20px;
+    color: var(--ink-3);
+  }
+  .empty-icon {
+    width: 48px; height: 48px; margin: 0 auto 12px;
+    opacity: 0.3;
+  }
+  .empty-text { font-size: 14px; }
+
+  /* ============ 로딩/토스트 ============ */
+  .toast {
+    position: fixed; top: 72px; left: 50%;
+    transform: translateX(-50%) translateY(-120%);
+    background: var(--ink); color: var(--accent-ink);
+    padding: 10px 18px; border-radius: var(--radius);
+    font-size: 13px; z-index: 300;
+    transition: transform 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--red); }
+
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(245,243,238,0.7);
+    display: none; align-items: center; justify-content: center;
+    z-index: 400;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--line-2);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ============ 설정 ============ */
+  .settings-banner {
+    background: var(--amber-bg); color: var(--amber);
+    padding: 10px 14px; border-radius: var(--radius);
+    font-size: 12px; margin-bottom: 12px;
+    border: 1px solid rgba(138,90,26,0.2);
+  }
+  .settings-banner a { color: inherit; text-decoration: underline; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- ============ 헤더 ============ -->
+<header class="app-header">
+  <h1 class="app-title">계절근로자 관리 <small>v1.0</small></h1>
+</header>
+
+<!-- ============ 배정 페이지 ============ -->
+<main id="page-assign" class="page active">
+  <div class="field">
+    <label class="field-label">날짜</label>
+    <input type="date" id="assign-date" class="input">
+  </div>
+
+  <div class="section-title">
+    오늘의 현장
+    <span class="count" id="site-count">0개</span>
+  </div>
+
+  <div id="sites-container"></div>
+
+  <button class="add-worker-btn" id="add-site-btn" style="margin-top: 4px;">
+    + 현장 추가
+  </button>
+
+  <div style="margin-top: 20px;">
+    <button class="btn btn-primary" id="save-assign-btn">
+      전체 배정 저장
+    </button>
+  </div>
+
+  <!-- 오늘 등록된 배정 리스트 -->
+  <div style="margin-top: 28px;">
+    <div class="section-title">
+      오늘 저장된 배정
+      <span class="count" id="today-count">0건</span>
+    </div>
+    <div id="today-list"></div>
+  </div>
+</main>
+
+<!-- ============ 근로자 관리 페이지 ============ -->
+<main id="page-workers" class="page">
+  <div class="section-title">
+    근로자
+    <span class="count" id="worker-count">0명</span>
+  </div>
+  <div id="worker-list"></div>
+  <button class="fab" data-tab="workers" onclick="openWorkerModal()">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</main>
+
+<!-- ============ 업주 관리 페이지 ============ -->
+<main id="page-clients" class="page">
+  <div class="section-title">
+    업주
+    <span class="count" id="client-count">0곳</span>
+  </div>
+  <div id="client-list"></div>
+  <button class="fab" data-tab="clients" onclick="openClientModal()">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</main>
+
+<!-- ============ 대시보드 페이지 ============ -->
+<main id="page-dash" class="page">
+  <div class="field">
+    <label class="field-label">기준 월</label>
+    <input type="month" id="dash-ym" class="input">
+  </div>
+
+  <div class="dash-hero">
+    <div class="dash-hero-label">이번달 순익</div>
+    <div class="dash-hero-value" id="dash-profit">₩ 0</div>
+    <div class="dash-hero-month" id="dash-month-label"></div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric">
+      <div class="metric-label">총 매출</div>
+      <div class="metric-value small" id="dash-revenue">₩ 0</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">총 지급</div>
+      <div class="metric-value small" id="dash-pay">₩ 0</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">형님 몫</div>
+      <div class="metric-value small" id="dash-share1">₩ 0</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">우리 몫</div>
+      <div class="metric-value small" id="dash-share2">₩ 0</div>
+    </div>
+  </div>
+
+  <div class="metric" style="margin-top: 4px;">
+    <div class="metric-label">배정 건수</div>
+    <div class="metric-value" id="dash-count">0 건</div>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <button class="btn btn-ghost" style="width:100%;" onclick="openSettingsModal()">
+      ⚙ 설정 (API URL)
+    </button>
+  </div>
+</main>
+
+<!-- ============ 하단 탭 바 ============ -->
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="assign">
+    <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></div>
+    <span>배정</span>
+  </button>
+  <button class="tab-btn" data-tab="workers">
+    <div class="tab-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a6 6 0 016-6h0a6 6 0 016 6v2M17 11l2 2 4-4"/></svg></div>
+    <span>근로자</span>
+  </button>
+  <button class="tab-btn" data-tab="clients">
+    <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg></div>
+    <span>업주</span>
+  </button>
+  <button class="tab-btn" data-tab="dash">
+    <div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18M7 14l4-4 4 4 5-6"/></svg></div>
+    <span>대시보드</span>
+  </button>
+</nav>
+
+<!-- ============ 근로자 등록 모달 ============ -->
+<div class="modal-backdrop" id="worker-modal">
+  <div class="modal">
+    <div class="modal-close-bar"></div>
+    <h2 class="modal-title" id="worker-modal-title">근로자 등록</h2>
+    <input type="hidden" id="worker-id">
+    <div class="field">
+      <label class="field-label">이름 <span class="req">*</span></label>
+      <input type="text" id="worker-name" class="input" placeholder="홍길동">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">국적</label>
+        <input type="text" id="worker-nationality" class="input" placeholder="한국">
+      </div>
+      <div class="field">
+        <label class="field-label">구분</label>
+        <select id="worker-type" class="select">
+          <option value="합법">합법</option>
+          <option value="불법">불법</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">기본 지급단가 (원)</label>
+      <input type="number" id="worker-pay" class="input" placeholder="100000" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label class="field-label">연락처</label>
+      <input type="tel" id="worker-phone" class="input" placeholder="010-0000-0000">
+    </div>
+    <div class="field">
+      <label class="field-label">메모</label>
+      <textarea id="worker-memo" class="textarea"></textarea>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('worker-modal')">취소</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="saveWorker()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 업주 등록 모달 ============ -->
+<div class="modal-backdrop" id="client-modal">
+  <div class="modal">
+    <div class="modal-close-bar"></div>
+    <h2 class="modal-title" id="client-modal-title">업주 등록</h2>
+    <input type="hidden" id="client-id">
+    <div class="field">
+      <label class="field-label">업체명 <span class="req">*</span></label>
+      <input type="text" id="client-name" class="input" placeholder="○○농장">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">담당자</label>
+        <input type="text" id="client-manager" class="input">
+      </div>
+      <div class="field">
+        <label class="field-label">연락처</label>
+        <input type="tel" id="client-phone" class="input">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">주소</label>
+      <input type="text" id="client-address" class="input">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">기본 청구단가 (원)</label>
+        <input type="number" id="client-charge" class="input" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label class="field-label">정산주기</label>
+        <select id="client-cycle" class="select">
+          <option>일정산</option>
+          <option>주정산</option>
+          <option selected>월정산</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">메모</label>
+      <textarea id="client-memo" class="textarea"></textarea>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('client-modal')">취소</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="saveClient()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 설정 모달 ============ -->
+<div class="modal-backdrop" id="settings-modal">
+  <div class="modal">
+    <div class="modal-close-bar"></div>
+    <h2 class="modal-title">설정</h2>
+    <div class="field">
+      <label class="field-label">Apps Script Web App URL</label>
+      <textarea id="settings-api-url" class="textarea" style="font-size:12px; min-height:80px;" placeholder="https://script.google.com/macros/s/.../exec"></textarea>
+      <div style="font-size: 11px; color: var(--ink-3); margin-top: 6px;">
+        Apps Script 배포 후 받은 웹 앱 URL을 붙여넣으세요.
+      </div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closeModal('settings-modal')">취소</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="saveSettings()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 토스트 / 로딩 ============ -->
+<div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+
+<script>
+// ==========================================================================
+// 설정 / 상태
+// ==========================================================================
+
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyFqQYF-cEfsjfhu7HZntke-vQ2LNYbr6tdFwhHOMETuiuZz2KcS4ZJVDCHGMryfJCMWA/exec';
+
+const state = {
+  apiUrl: DEFAULT_API_URL,
+  workers: [],
+  clients: [],
+  sites: [],          // 배정 입력 중인 현장 목록
+  todayAssignments: [], // 오늘 이미 저장된 배정
+  currentTab: 'assign'
+};
+
+// ==========================================================================
+// 유틸
+// ==========================================================================
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+function formatNum(n) {
+  if (!n && n !== 0) return '0';
+  return Math.round(Number(n)).toLocaleString('ko-KR');
+}
+function formatWon(n) { return '₩ ' + formatNum(n); }
+function todayStr() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function currentYm() {
+  return todayStr().substring(0, 7);
+}
+
+function toast(msg, isError = false) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 2200);
+}
+function showLoading(on) {
+  $('#loading').classList.toggle('show', on);
+}
+
+function openModal(id) {
+  $('#' + id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  $('#' + id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// 모달 배경 탭 시 닫기
+$$('.modal-backdrop').forEach(b => {
+  b.addEventListener('click', (e) => {
+    if (e.target === b) closeModal(b.id);
+  });
+});
+
+// ==========================================================================
+// API 호출
+// ==========================================================================
+
+async function api(action, params = {}) {
+  if (!state.apiUrl) {
+    toast('API URL을 먼저 설정하세요', true);
+    throw new Error('No API URL');
+  }
+  const url = new URL(state.apiUrl);
+  url.searchParams.set('action', action);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null) url.searchParams.set(k, v);
+  });
+  const res = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Unknown error');
+  return data.data;
+}
+
+async function apiPost(action, payload = {}) {
+  if (!state.apiUrl) {
+    toast('API URL을 먼저 설정하세요', true);
+    throw new Error('No API URL');
+  }
+  const url = new URL(state.apiUrl);
+  url.searchParams.set('action', action);
+  // Apps Script는 POST 시 CORS preflight 피하기 위해 text/plain 권장
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, ...payload }),
+    redirect: 'follow'
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Unknown error');
+  return data.data;
+}
+
+// ==========================================================================
+// 탭 전환
+// ==========================================================================
+
+function switchTab(tabName) {
+  state.currentTab = tabName;
+  $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+  $$('.page').forEach(p => p.classList.remove('active'));
+  $('#page-' + tabName).classList.add('active');
+
+  // FAB 표시 제어
+  $$('.fab').forEach(f => {
+    f.style.display = (f.dataset.tab === tabName) ? 'flex' : 'none';
+  });
+
+  // 탭별 로딩
+  if (tabName === 'workers') renderWorkers();
+  if (tabName === 'clients') renderClients();
+  if (tabName === 'assign') renderSites(), loadTodayAssignments();
+  if (tabName === 'dash') loadDashboard();
+}
+
+$$('.tab-btn').forEach(b => {
+  b.addEventListener('click', () => switchTab(b.dataset.tab));
+});
+
+// ==========================================================================
+// 초기 부팅
+// ==========================================================================
+
+async function boot() {
+  // 저장된 API URL 로드
+  const saved = localStorage.getItem('sw_api_url');
+  if (saved) state.apiUrl = saved;
+
+  // 오늘 날짜 기본값
+  $('#assign-date').value = todayStr();
+  $('#dash-ym').value = currentYm();
+
+  // 초기 1개 현장
+  if (state.sites.length === 0) addSite();
+
+  // FAB 초기 상태
+  $$('.fab').forEach(f => f.style.display = 'none');
+
+  await loadAllData();
+}
+
+async function loadAllData() {
+  showLoading(true);
+  try {
+    const [workers, clients] = await Promise.all([
+      api('listWorkers'),
+      api('listClients')
+    ]);
+    state.workers = workers;
+    state.clients = clients;
+    renderSites();
+    await loadTodayAssignments();
+  } catch (err) {
+    toast('데이터 로드 실패: ' + err.message, true);
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ==========================================================================
+// 배정 - 현장 블록 관리
+// ==========================================================================
+
+function addSite() {
+  state.sites.push({
+    clientId: '',
+    charge: '',
+    workers: []  // [{workerId, pay}]
+  });
+  renderSites();
+}
+
+function removeSite(idx) {
+  if (!confirm('이 현장을 삭제할까요?')) return;
+  state.sites.splice(idx, 1);
+  if (state.sites.length === 0) addSite();
+  renderSites();
+}
+
+function renderSites() {
+  const container = $('#sites-container');
+  container.innerHTML = '';
+  $('#site-count').textContent = state.sites.length + '개';
+
+  state.sites.forEach((site, idx) => {
+    const block = document.createElement('div');
+    block.className = 'site-block';
+    block.innerHTML = `
+      <div class="site-block-head">
+        <div class="site-block-title">현장 ${idx + 1}</div>
+        ${state.sites.length > 1 ? `<button class="btn-icon" onclick="removeSite(${idx})" title="삭제"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 002 2h8a2 2 0 002-2l1-13M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg></button>` : ''}
+      </div>
+      <div class="field">
+        <label class="field-label">업주 <span class="req">*</span></label>
+        <select class="select" onchange="updateSite(${idx}, 'clientId', this.value)">
+          <option value="">-- 업주 선택 --</option>
+          ${state.clients.map(c => `<option value="${c.ID}" ${site.clientId === c.ID ? 'selected' : ''}>${c['업체명']}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">청구단가 (인당, 원)</label>
+        <input type="number" class="input" inputmode="numeric" value="${site.charge || ''}" placeholder="130000" onchange="updateSite(${idx}, 'charge', this.value)">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label class="field-label">근로자 (${site.workers.length}명)</label>
+        <div id="site-workers-${idx}"></div>
+        <div class="worker-search-wrap">
+          <input
+            type="text"
+            class="input worker-search-input"
+            id="worker-search-${idx}"
+            placeholder="근로자 이름 또는 국적 검색..."
+            autocomplete="off"
+            oninput="filterWorkers(${idx}, this.value)"
+            onfocus="filterWorkers(${idx}, this.value)">
+          <div class="worker-dropdown" id="worker-dropdown-${idx}"></div>
+        </div>
+      </div>
+    `;
+    container.appendChild(block);
+
+    // 근로자 칩들 렌더
+    const workersDiv = block.querySelector(`#site-workers-${idx}`);
+    site.workers.forEach((w, wi) => {
+      const worker = state.workers.find(x => x.ID === w.workerId);
+      const chip = document.createElement('div');
+      chip.className = 'worker-chip';
+      chip.innerHTML = `
+        <div class="worker-chip-name">${worker ? worker['이름'] : '?'}</div>
+        <input type="number" class="worker-chip-pay" inputmode="numeric" value="${w.pay || ''}" placeholder="지급" onchange="updateWorkerPay(${idx}, ${wi}, this.value)">
+        <button class="worker-chip-remove" onclick="removeWorker(${idx}, ${wi})">×</button>
+      `;
+      workersDiv.appendChild(chip);
+    });
+  });
+}
+
+function updateSite(idx, field, val) {
+  state.sites[idx][field] = val;
+  // 청구단가 변경 시 비저장, 업주 변경 시 기본 단가 채우기
+  if (field === 'clientId' && val) {
+    const client = state.clients.find(c => c.ID === val);
+    if (client && !state.sites[idx].charge && client['기본청구단가']) {
+      state.sites[idx].charge = client['기본청구단가'];
+      renderSites();
+    }
+  }
+}
+function updateWorkerPay(siteIdx, workerIdx, val) {
+  state.sites[siteIdx].workers[workerIdx].pay = val;
+}
+function removeWorker(siteIdx, workerIdx) {
+  state.sites[siteIdx].workers.splice(workerIdx, 1);
+  renderSites();
+}
+
+// ==========================================================================
+// 근로자 자동완성 드롭다운
+// ==========================================================================
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function highlight(text, query) {
+  const s = escapeHtml(text);
+  if (!query) return s;
+  const q = escapeHtml(query);
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return s.replace(re, '<span class="hi">$1</span>');
+}
+
+function filterWorkers(siteIdx, query) {
+  const dropdown = document.getElementById('worker-dropdown-' + siteIdx);
+  if (!dropdown) return;
+
+  const alreadySelected = state.sites[siteIdx].workers.map(w => w.workerId);
+  const q = (query || '').trim().toLowerCase();
+
+  // 이미 선택된 근로자 제외 + 검색어 필터
+  let filtered = state.workers.filter(w => !alreadySelected.includes(w.ID));
+  if (q) {
+    filtered = filtered.filter(w => {
+      const name = (w['이름'] || '').toLowerCase();
+      const nat = (w['국적'] || '').toLowerCase();
+      return name.includes(q) || nat.includes(q);
+    });
+  }
+
+  // 최대 20명까지만 표시
+  filtered = filtered.slice(0, 20);
+
+  if (filtered.length === 0) {
+    dropdown.innerHTML = `<div class="dropdown-empty">${q ? '검색 결과가 없습니다' : '추가 가능한 근로자가 없습니다'}</div>`;
+  } else {
+    dropdown.innerHTML = filtered.map(w => `
+      <div class="dropdown-item" onclick="addWorkerToSite(${siteIdx}, '${w.ID}')">
+        <div class="dropdown-item-name">${highlight(w['이름'], q)}</div>
+        <div class="dropdown-item-meta">${highlight(w['국적'] || '-', q)} · ${w['구분']} · 기본 ${formatNum(w['기본지급단가'])}원</div>
+      </div>
+    `).join('');
+  }
+  dropdown.classList.add('show');
+}
+
+function addWorkerToSite(siteIdx, workerId) {
+  const worker = state.workers.find(w => w.ID === workerId);
+  if (!worker) return;
+  state.sites[siteIdx].workers.push({
+    workerId: workerId,
+    pay: worker['기본지급단가'] || ''
+  });
+  renderSites();
+  // 추가 후 검색창에 다시 포커스 (연속 추가 가능하도록)
+  setTimeout(() => {
+    const input = document.getElementById('worker-search-' + siteIdx);
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+  }, 50);
+}
+
+// 외부 클릭 시 드롭다운 닫기
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.worker-search-wrap')) {
+    document.querySelectorAll('.worker-dropdown').forEach(d => d.classList.remove('show'));
+  }
+});
+
+$('#add-site-btn').addEventListener('click', addSite);
+
+// ==========================================================================
+// 배정 저장
+// ==========================================================================
+
+$('#save-assign-btn').addEventListener('click', async () => {
+  const date = $('#assign-date').value;
+  if (!date) { toast('날짜를 선택하세요', true); return; }
+
+  // 유효성 검사 및 평탄화
+  const payload = [];
+  for (let i = 0; i < state.sites.length; i++) {
+    const site = state.sites[i];
+    if (!site.clientId) { toast(`현장 ${i+1}: 업주를 선택하세요`, true); return; }
+    if (!site.charge) { toast(`현장 ${i+1}: 청구단가를 입력하세요`, true); return; }
+    if (site.workers.length === 0) { toast(`현장 ${i+1}: 근로자를 추가하세요`, true); return; }
+    for (const w of site.workers) {
+      if (!w.pay) { toast(`현장 ${i+1}: 지급단가를 모두 입력하세요`, true); return; }
+      payload.push({
+        '날짜': date,
+        '업주ID': site.clientId,
+        '근로자ID': w.workerId,
+        '청구단가': Number(site.charge),
+        '지급단가': Number(w.pay)
+      });
+    }
+  }
+
+  showLoading(true);
+  try {
+    const result = await apiPost('saveAssignment', { assignments: payload });
+    toast(`${result.count}건 저장 완료`);
+    // 초기화
+    state.sites = [];
+    addSite();
+    await loadTodayAssignments();
+  } catch (err) {
+    toast('저장 실패: ' + err.message, true);
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+});
+
+// ==========================================================================
+// 오늘의 배정 목록
+// ==========================================================================
+
+async function loadTodayAssignments() {
+  const date = $('#assign-date').value || todayStr();
+  try {
+    const list = await api('listAssignments', { date });
+    state.todayAssignments = list;
+    renderTodayList();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderTodayList() {
+  const container = $('#today-list');
+  container.innerHTML = '';
+  $('#today-count').textContent = state.todayAssignments.length + '건';
+
+  if (state.todayAssignments.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-text">아직 저장된 배정이 없습니다</div></div>';
+    return;
+  }
+
+  // 업주별 그룹핑
+  const groups = {};
+  state.todayAssignments.forEach(a => {
+    const key = a['업주ID'] + '|' + a['업주명'];
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(a);
+  });
+
+  Object.entries(groups).forEach(([key, list]) => {
+    const [, clientName] = key.split('|');
+    const totalCharge = list.reduce((s, a) => s + Number(a['청구단가'] || 0), 0);
+    const totalPay = list.reduce((s, a) => s + Number(a['지급단가'] || 0), 0);
+    const margin = totalCharge - totalPay;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+        <div style="font-weight:700; font-family:var(--display);">${clientName || '(미지정)'}</div>
+        <div style="font-size:12px; color:var(--ink-3);">${list.length}명</div>
+      </div>
+      ${list.map(a => `
+        <div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0;">
+          <span>${a['근로자명'] || '?'}</span>
+          <span style="color:var(--ink-3);">청구 ${formatNum(a['청구단가'])} / 지급 ${formatNum(a['지급단가'])}</span>
+        </div>
+      `).join('')}
+      <div style="display:flex; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:13px;">
+        <span>마진</span>
+        <span style="font-weight:700; color:${margin >= 0 ? 'var(--green)' : 'var(--red)'};">${formatWon(margin)}</span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+$('#assign-date').addEventListener('change', loadTodayAssignments);
+
+// ==========================================================================
+// 근로자 관리
+// ==========================================================================
+
+function renderWorkers() {
+  const list = $('#worker-list');
+  list.innerHTML = '';
+  $('#worker-count').textContent = state.workers.length + '명';
+
+  if (state.workers.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-text">아직 등록된 근로자가 없습니다<br>우측 하단 + 버튼으로 추가하세요</div></div>';
+    return;
+  }
+
+  state.workers.forEach(w => {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+    item.innerHTML = `
+      <div class="list-item-main">
+        <div class="list-item-title">
+          ${w['이름']}
+          <span class="badge ${w['구분'] === '합법' ? 'green' : 'amber'}">${w['구분']}</span>
+        </div>
+        <div class="list-item-sub">
+          ${w['국적'] || '-'} · 기본 ${formatNum(w['기본지급단가'])}원 ${w['연락처'] ? '· ' + w['연락처'] : ''}
+        </div>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" onclick='editWorker(${JSON.stringify(w).replace(/'/g, "&#39;")})' title="수정">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18 2l4 4-11 11H7v-4L18 2z"/></svg>
+        </button>
+        <button class="btn-icon" onclick="deleteWorker('${w.ID}', '${w['이름']}')" title="삭제" style="color:var(--red);">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 002 2h8a2 2 0 002-2l1-13M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+        </button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function openWorkerModal() {
+  $('#worker-modal-title').textContent = '근로자 등록';
+  $('#worker-id').value = '';
+  $('#worker-name').value = '';
+  $('#worker-nationality').value = '';
+  $('#worker-type').value = '합법';
+  $('#worker-pay').value = '';
+  $('#worker-phone').value = '';
+  $('#worker-memo').value = '';
+  openModal('worker-modal');
+}
+
+function editWorker(w) {
+  $('#worker-modal-title').textContent = '근로자 수정';
+  $('#worker-id').value = w.ID;
+  $('#worker-name').value = w['이름'] || '';
+  $('#worker-nationality').value = w['국적'] || '';
+  $('#worker-type').value = w['구분'] || '합법';
+  $('#worker-pay').value = w['기본지급단가'] || '';
+  $('#worker-phone').value = w['연락처'] || '';
+  $('#worker-memo').value = w['메모'] || '';
+  openModal('worker-modal');
+}
+
+async function saveWorker() {
+  const name = $('#worker-name').value.trim();
+  if (!name) { toast('이름을 입력하세요', true); return; }
+
+  const payload = {
+    '이름': name,
+    '국적': $('#worker-nationality').value.trim(),
+    '구분': $('#worker-type').value,
+    '기본지급단가': Number($('#worker-pay').value || 0),
+    '연락처': $('#worker-phone').value.trim(),
+    '메모': $('#worker-memo').value.trim()
+  };
+  const id = $('#worker-id').value;
+  if (id) payload.id = id;
+
+  showLoading(true);
+  try {
+    await apiPost('saveWorker', payload);
+    toast(id ? '수정되었습니다' : '등록되었습니다');
+    closeModal('worker-modal');
+    state.workers = await api('listWorkers');
+    renderWorkers();
+  } catch (err) {
+    toast('저장 실패: ' + err.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function deleteWorker(id, name) {
+  if (!confirm(`'${name}' 근로자를 삭제하시겠습니까?\n(과거 배정 이력은 그대로 보존됩니다)`)) return;
+  showLoading(true);
+  try {
+    await apiPost('deleteWorker', { id });
+    toast('삭제되었습니다');
+    state.workers = await api('listWorkers');
+    renderWorkers();
+  } catch (err) {
+    toast('삭제 실패: ' + err.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ==========================================================================
+// 업주 관리
+// ==========================================================================
+
+function renderClients() {
+  const list = $('#client-list');
+  list.innerHTML = '';
+  $('#client-count').textContent = state.clients.length + '곳';
+
+  if (state.clients.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="empty-text">아직 등록된 업주가 없습니다<br>우측 하단 + 버튼으로 추가하세요</div></div>';
+    return;
+  }
+
+  state.clients.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+    item.innerHTML = `
+      <div class="list-item-main">
+        <div class="list-item-title">
+          ${c['업체명']}
+          <span class="badge blue">${c['정산주기'] || '월정산'}</span>
+        </div>
+        <div class="list-item-sub">
+          ${c['담당자'] || '-'} ${c['연락처'] ? '· ' + c['연락처'] : ''} · 기본청구 ${formatNum(c['기본청구단가'])}원
+        </div>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" onclick='editClient(${JSON.stringify(c).replace(/'/g, "&#39;")})' title="수정">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18 2l4 4-11 11H7v-4L18 2z"/></svg>
+        </button>
+        <button class="btn-icon" onclick="deleteClient('${c.ID}', '${c['업체명']}')" title="삭제" style="color:var(--red);">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 13a2 2 0 002 2h8a2 2 0 002-2l1-13M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+        </button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function openClientModal() {
+  $('#client-modal-title').textContent = '업주 등록';
+  $('#client-id').value = '';
+  $('#client-name').value = '';
+  $('#client-manager').value = '';
+  $('#client-phone').value = '';
+  $('#client-address').value = '';
+  $('#client-charge').value = '';
+  $('#client-cycle').value = '월정산';
+  $('#client-memo').value = '';
+  openModal('client-modal');
+}
+
+function editClient(c) {
+  $('#client-modal-title').textContent = '업주 수정';
+  $('#client-id').value = c.ID;
+  $('#client-name').value = c['업체명'] || '';
+  $('#client-manager').value = c['담당자'] || '';
+  $('#client-phone').value = c['연락처'] || '';
+  $('#client-address').value = c['주소'] || '';
+  $('#client-charge').value = c['기본청구단가'] || '';
+  $('#client-cycle').value = c['정산주기'] || '월정산';
+  $('#client-memo').value = c['메모'] || '';
+  openModal('client-modal');
+}
+
+async function saveClient() {
+  const name = $('#client-name').value.trim();
+  if (!name) { toast('업체명을 입력하세요', true); return; }
+
+  const payload = {
+    '업체명': name,
+    '담당자': $('#client-manager').value.trim(),
+    '연락처': $('#client-phone').value.trim(),
+    '주소': $('#client-address').value.trim(),
+    '기본청구단가': Number($('#client-charge').value || 0),
+    '정산주기': $('#client-cycle').value,
+    '메모': $('#client-memo').value.trim()
+  };
+  const id = $('#client-id').value;
+  if (id) payload.id = id;
+
+  showLoading(true);
+  try {
+    await apiPost('saveClient', payload);
+    toast(id ? '수정되었습니다' : '등록되었습니다');
+    closeModal('client-modal');
+    state.clients = await api('listClients');
+    renderClients();
+  } catch (err) {
+    toast('저장 실패: ' + err.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function deleteClient(id, name) {
+  if (!confirm(`'${name}' 업주를 삭제하시겠습니까?\n(과거 배정 이력은 그대로 보존됩니다)`)) return;
+  showLoading(true);
+  try {
+    await apiPost('deleteClient', { id });
+    toast('삭제되었습니다');
+    state.clients = await api('listClients');
+    renderClients();
+  } catch (err) {
+    toast('삭제 실패: ' + err.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+// ==========================================================================
+// 대시보드
+// ==========================================================================
+
+async function loadDashboard() {
+  const ym = $('#dash-ym').value || currentYm();
+  showLoading(true);
+  try {
+    const s = await api('monthlySummary', { ym });
+    $('#dash-month-label').textContent = ym.replace('-', '년 ') + '월';
+    $('#dash-revenue').textContent = formatWon(s['총매출']);
+    $('#dash-pay').textContent = formatWon(s['총지급']);
+    $('#dash-profit').textContent = formatWon(s['순익']);
+    $('#dash-share1').textContent = formatWon(s['형님몫']);
+    $('#dash-share2').textContent = formatWon(s['우리몫']);
+    $('#dash-count').textContent = formatNum(s['배정건수']) + ' 건';
+  } catch (err) {
+    toast('집계 로드 실패: ' + err.message, true);
+  } finally {
+    showLoading(false);
+  }
+}
+
+$('#dash-ym').addEventListener('change', loadDashboard);
+
+// ==========================================================================
+// 설정
+// ==========================================================================
+
+function openSettingsModal() {
+  $('#settings-api-url').value = state.apiUrl || '';
+  openModal('settings-modal');
+}
+
+function saveSettings() {
+  const url = $('#settings-api-url').value.trim();
+  if (!url) { toast('URL을 입력하세요', true); return; }
+  state.apiUrl = url;
+  localStorage.setItem('sw_api_url', url);
+  closeModal('settings-modal');
+  toast('저장되었습니다');
+  loadAllData();
+}
+
+// ==========================================================================
+// 전역 노출 (onclick 핸들러용)
+// ==========================================================================
+
+window.removeSite = removeSite;
+window.updateSite = updateSite;
+window.updateWorkerPay = updateWorkerPay;
+window.removeWorker = removeWorker;
+window.filterWorkers = filterWorkers;
+window.addWorkerToSite = addWorkerToSite;
+window.openWorkerModal = openWorkerModal;
+window.editWorker = editWorker;
+window.saveWorker = saveWorker;
+window.deleteWorker = deleteWorker;
+window.openClientModal = openClientModal;
+window.editClient = editClient;
+window.saveClient = saveClient;
+window.deleteClient = deleteClient;
+window.closeModal = closeModal;
+window.openSettingsModal = openSettingsModal;
+window.saveSettings = saveSettings;
+
+// ==========================================================================
+// 시작
+// ==========================================================================
+
+boot();
+
+</script>
+</body>
+</html>
