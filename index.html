@@ -235,29 +235,76 @@
   }
 
   .worker-chip {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; flex-direction: column;
     padding: 10px 12px;
     background: var(--bg-elev);
     border-radius: var(--radius);
     margin-bottom: 6px;
+    gap: 8px;
+  }
+  .worker-chip-head {
+    display: flex; align-items: center; gap: 8px;
   }
   .worker-chip-name {
     flex: 1; font-weight: 500; font-size: 14px;
   }
-  .worker-chip-pay {
-    width: 90px;
-    padding: 6px 8px;
+  .worker-chip-badge {
+    font-size: 10px; padding: 2px 6px;
+    border-radius: 8px;
+  }
+  .worker-chip-inputs {
+    display: grid; grid-template-columns: 1fr 1fr 28px;
+    gap: 6px; align-items: center;
+  }
+  .worker-chip-input-wrap {
+    position: relative;
+  }
+  .worker-chip-input-label {
+    position: absolute;
+    top: -7px; left: 8px;
+    font-size: 9px;
+    color: var(--ink-3);
+    background: var(--bg-elev);
+    padding: 0 4px;
+    letter-spacing: 0.02em;
+    font-weight: 500;
+    z-index: 1;
+  }
+  .worker-chip-input-label.charge { color: var(--blue); }
+  .worker-chip-input-label.pay { color: var(--red); }
+  .worker-chip-input {
+    width: 100%;
+    padding: 7px 8px;
     border: 1px solid var(--line-2);
     border-radius: 6px;
     background: var(--bg-card);
     font-size: 13px;
     text-align: right;
+    -webkit-appearance: none; appearance: none;
   }
+  .worker-chip-input:focus {
+    outline: none;
+    border-color: var(--ink);
+  }
+  .worker-chip-input.charge:focus { border-color: var(--blue); }
+  .worker-chip-input.pay:focus { border-color: var(--red); }
+  .worker-chip-margin {
+    text-align: right;
+    font-size: 11px;
+    color: var(--ink-3);
+    padding-right: 4px;
+  }
+  .worker-chip-margin .val {
+    font-weight: 700;
+  }
+  .worker-chip-margin .val.positive { color: var(--green); }
+  .worker-chip-margin .val.negative { color: var(--red); }
   .worker-chip-remove {
-    width: 26px; height: 26px; border-radius: 50%;
+    width: 28px; height: 28px; border-radius: 50%;
     background: var(--bg-card); color: var(--ink-3);
     display: flex; align-items: center; justify-content: center;
     font-size: 16px; font-weight: 500;
+    border: 1px solid var(--line-2);
   }
 
   .add-worker-btn {
@@ -1142,8 +1189,7 @@ async function loadAllData() {
 function addSite() {
   state.sites.push({
     clientId: '',
-    charge: '',
-    workers: []  // [{workerId, pay}]
+    workers: []  // [{workerId, charge, pay}] - 근로자마다 청구/지급 둘 다
   });
   renderSites();
 }
@@ -1161,6 +1207,11 @@ function renderSites() {
   $('#site-count').textContent = state.sites.length + '개';
 
   state.sites.forEach((site, idx) => {
+    // 현장별 합계 계산
+    const totalCharge = site.workers.reduce((s, w) => s + (Number(w.charge) || 0), 0);
+    const totalPay = site.workers.reduce((s, w) => s + (Number(w.pay) || 0), 0);
+    const totalMargin = totalCharge - totalPay;
+
     const block = document.createElement('div');
     block.className = 'site-block';
     block.innerHTML = `
@@ -1174,10 +1225,6 @@ function renderSites() {
           <option value="">-- 업주 선택 --</option>
           ${state.clients.map(c => `<option value="${c.ID}" ${site.clientId === c.ID ? 'selected' : ''}>${c['업체명']}</option>`).join('')}
         </select>
-      </div>
-      <div class="field">
-        <label class="field-label">청구단가 (인당, 원)</label>
-        <input type="number" class="input" inputmode="numeric" value="${site.charge || ''}" placeholder="130000" onchange="updateSite(${idx}, 'charge', this.value)">
       </div>
       <div class="field" style="margin-bottom:0;">
         <label class="field-label">근로자 (${site.workers.length}명)</label>
@@ -1194,19 +1241,55 @@ function renderSites() {
           <div class="worker-dropdown" id="worker-dropdown-${idx}"></div>
         </div>
       </div>
+      ${site.workers.length > 0 ? `
+        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; font-size: 12px;">
+          <span style="color: var(--ink-3);">현장 합계</span>
+          <div>
+            <span style="color: var(--blue); font-weight: 500;">청구 ${formatNum(totalCharge)}</span>
+            <span style="color: var(--ink-3); margin: 0 6px;">·</span>
+            <span style="color: var(--red); font-weight: 500;">지급 ${formatNum(totalPay)}</span>
+            <span style="color: var(--ink-3); margin: 0 6px;">·</span>
+            <span style="color: ${totalMargin >= 0 ? 'var(--green)' : 'var(--red)'}; font-weight: 700;">마진 ${formatNum(totalMargin)}</span>
+          </div>
+        </div>
+      ` : ''}
     `;
     container.appendChild(block);
 
-    // 근로자 칩들 렌더
+    // 근로자 칩들 렌더 (청구+지급 둘 다)
     const workersDiv = block.querySelector(`#site-workers-${idx}`);
     site.workers.forEach((w, wi) => {
       const worker = state.workers.find(x => x.ID === w.workerId);
+      const margin = (Number(w.charge) || 0) - (Number(w.pay) || 0);
+      const marginClass = margin > 0 ? 'positive' : (margin < 0 ? 'negative' : '');
+
       const chip = document.createElement('div');
       chip.className = 'worker-chip';
       chip.innerHTML = `
-        <div class="worker-chip-name">${worker ? worker['이름'] : '?'}</div>
-        <input type="number" class="worker-chip-pay" inputmode="numeric" value="${w.pay || ''}" placeholder="지급" onchange="updateWorkerPay(${idx}, ${wi}, this.value)">
-        <button class="worker-chip-remove" onclick="removeWorker(${idx}, ${wi})">×</button>
+        <div class="worker-chip-head">
+          <div class="worker-chip-name">${worker ? escapeHtml(worker['이름']) : '?'}</div>
+          ${worker ? `<span class="badge ${worker['구분'] === '합법' ? 'green' : 'amber'} worker-chip-badge">${worker['구분']}</span>` : ''}
+        </div>
+        <div class="worker-chip-inputs">
+          <div class="worker-chip-input-wrap">
+            <span class="worker-chip-input-label charge">청구 (원)</span>
+            <input type="number" class="worker-chip-input charge" inputmode="numeric"
+              value="${w.charge || ''}" placeholder="130000"
+              onchange="updateWorkerField(${idx}, ${wi}, 'charge', this.value)">
+          </div>
+          <div class="worker-chip-input-wrap">
+            <span class="worker-chip-input-label pay">지급 (원)</span>
+            <input type="number" class="worker-chip-input pay" inputmode="numeric"
+              value="${w.pay || ''}" placeholder="90000"
+              onchange="updateWorkerField(${idx}, ${wi}, 'pay', this.value)">
+          </div>
+          <button class="worker-chip-remove" onclick="removeWorker(${idx}, ${wi})" title="삭제">×</button>
+        </div>
+        ${(w.charge || w.pay) ? `
+          <div class="worker-chip-margin">
+            마진 <span class="val ${marginClass}">${formatNum(margin)}원</span>
+          </div>
+        ` : ''}
       `;
       workersDiv.appendChild(chip);
     });
@@ -1215,18 +1298,26 @@ function renderSites() {
 
 function updateSite(idx, field, val) {
   state.sites[idx][field] = val;
-  // 청구단가 변경 시 비저장, 업주 변경 시 기본 단가 채우기
+  // 업주 변경 시 → 기존 근로자들의 청구단가를 해당 업주 기본청구단가로 자동 채움 (빈 칸만)
   if (field === 'clientId' && val) {
     const client = state.clients.find(c => c.ID === val);
-    if (client && !state.sites[idx].charge && client['기본청구단가']) {
-      state.sites[idx].charge = client['기본청구단가'];
-      renderSites();
+    if (client && client['기본청구단가']) {
+      const defaultCharge = Number(client['기본청구단가']);
+      let changed = false;
+      state.sites[idx].workers.forEach(w => {
+        if (!w.charge) { w.charge = defaultCharge; changed = true; }
+      });
+      if (changed) renderSites();
     }
   }
 }
-function updateWorkerPay(siteIdx, workerIdx, val) {
-  state.sites[siteIdx].workers[workerIdx].pay = val;
+
+function updateWorkerField(siteIdx, workerIdx, field, val) {
+  state.sites[siteIdx].workers[workerIdx][field] = val;
+  // 합계 재렌더 (마진 업데이트)
+  renderSites();
 }
+
 function removeWorker(siteIdx, workerIdx) {
   state.sites[siteIdx].workers.splice(workerIdx, 1);
   renderSites();
@@ -1286,9 +1377,17 @@ function filterWorkers(siteIdx, query) {
 function addWorkerToSite(siteIdx, workerId) {
   const worker = state.workers.find(w => w.ID === workerId);
   if (!worker) return;
-  state.sites[siteIdx].workers.push({
+  const site = state.sites[siteIdx];
+  // 청구단가: 업주의 기본청구단가 가져오기
+  const client = state.clients.find(c => c.ID === site.clientId);
+  const defaultCharge = client ? (Number(client['기본청구단가']) || '') : '';
+  // 지급단가: 근로자의 기본지급단가
+  const defaultPay = Number(worker['기본지급단가']) || '';
+
+  site.workers.push({
     workerId: workerId,
-    pay: worker['기본지급단가'] || ''
+    charge: defaultCharge,
+    pay: defaultPay
   });
   renderSites();
   // 추가 후 검색창에 다시 포커스 (연속 추가 가능하도록)
@@ -1323,15 +1422,15 @@ $('#save-assign-btn').addEventListener('click', async () => {
   for (let i = 0; i < state.sites.length; i++) {
     const site = state.sites[i];
     if (!site.clientId) { toast(`현장 ${i+1}: 업주를 선택하세요`, true); return; }
-    if (!site.charge) { toast(`현장 ${i+1}: 청구단가를 입력하세요`, true); return; }
     if (site.workers.length === 0) { toast(`현장 ${i+1}: 근로자를 추가하세요`, true); return; }
     for (const w of site.workers) {
+      if (!w.charge) { toast(`현장 ${i+1}: 청구단가를 모두 입력하세요`, true); return; }
       if (!w.pay) { toast(`현장 ${i+1}: 지급단가를 모두 입력하세요`, true); return; }
       payload.push({
         '날짜': date,
         '업주ID': site.clientId,
         '근로자ID': w.workerId,
-        '청구단가': Number(site.charge),
+        '청구단가': Number(w.charge),
         '지급단가': Number(w.pay)
       });
     }
@@ -1933,7 +2032,7 @@ function saveSettings() {
 
 window.removeSite = removeSite;
 window.updateSite = updateSite;
-window.updateWorkerPay = updateWorkerPay;
+window.updateWorkerField = updateWorkerField;
 window.removeWorker = removeWorker;
 window.filterWorkers = filterWorkers;
 window.addWorkerToSite = addWorkerToSite;
